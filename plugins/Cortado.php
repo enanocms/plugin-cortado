@@ -31,6 +31,7 @@ $plugins->attachHook('render_wikiformat_pre', 'cortado_process($text);');
 function cortado_process(&$text)
 {
   global $db, $session, $paths, $template, $plugins; // Common objects
+  global $lang;
   
   $match_count = preg_match_all('#\[\[:' . preg_quote($paths->nslist['File']) . '([^]]+?\.ogg)(\|video)?\]\]#is', $text, $matches);
   if ( $match_count < 1 )
@@ -57,11 +58,12 @@ function cortado_process(&$text)
             <param name="audio" value="true"/>
             <param name="bufferSize" value="200"/>
             <param name="autoPlay" value="false"/>
+            {lang:cortado_err_no_java}
           </applet>
           <div class="cortado-controls">
-            <a href="#" onclick="document.applets['cortado_{UUID}'].doPlay(); return false;">Play</a> |
-            <a href="#" onclick="document.applets['cortado_{UUID}'].doPause(); return false;">Pause</a> |
-            <a href="#" onclick="document.applets['cortado_{UUID}'].doStop(); return false;">Stop</a>
+            <a href="#" onclick="document.applets['cortado_{UUID}'].doPlay(); return false;">{lang:cortado_btn_play}</a> |
+            <a href="#" onclick="document.applets['cortado_{UUID}'].doPause(); return false;">{lang:cortado_btn_pause}</a> |
+            <a href="#" onclick="document.applets['cortado_{UUID}'].doStop(); return false;">{lang:cortado_btn_stop}</a>
           </div>
         </div>
       
@@ -87,7 +89,7 @@ TPLCODE;
     if ( !$acl->get_permissions('read') )
     {
       // No permission to read this file
-      $text = str_replace_once($entire_match, "<span class=\"cortado-error\">Access denied to file {$filename} - not embedding media player applet.</span>", $text);
+      $text = str_replace_once($entire_match, "<span class=\"cortado-error\">" . $lang->get('cortado_err_access_denied', array('filename' => $filename)) . "</span>", $text);
       continue;
     }
     
@@ -110,3 +112,53 @@ TPLCODE;
     $text = str_replace_once($entire_match, $applet_parsed, $text);
   }
 }
+
+/**!language**
+
+The following text up to the closing comment tag is JSON language data.
+It is not PHP code but your editor or IDE may highlight it as such. This
+data is imported when the plugin is loaded for the first time; it provides
+the strings displayed by this plugin's interface.
+
+You should copy and paste this block when you create your own plugins so
+that these comments and the basic structure of the language data is
+preserved. All language data is in the same format as the Enano core
+language files in the /language/* directories. See the Enano Localization
+Guide and Enano API Documentation for further information on the format of
+language files.
+
+The exception in plugin language file format is that multiple languages
+may be specified in the language block. This should be done by way of making
+the top-level elements each a JSON language object, with elements named
+according to the ISO-639-1 language they are representing. The path should be:
+
+  root => language ID => categories array, strings object => category \
+  objects => strings
+
+All text leading up to first curly brace is stripped by the parser; using
+a code tag makes jEdit and other editors do automatic indentation and
+syntax highlighting on the language data. The use of the code tag is not
+necessary; it is only included as a tool for development.
+
+<code>
+{
+  // english
+  eng: {
+    categories: [ 'meta', 'cortado' ],
+    strings: {
+      meta: {
+        cortado: 'Cortado plugin'
+      },
+      cortado: {
+        err_no_java: 'Your browser doesn\'t have a Java plugin. You can get Java from <a href="http://java.com/">java.com</a>.',
+        err_access_denied: 'Access to file "%filename%" is denied, so the media player can\'t be loaded here.',
+        btn_play: 'Play',
+        btn_pause: 'Pause',
+        btn_stop: 'Stop'
+      }
+    }
+  }
+}
+</code>
+
+**!*/
